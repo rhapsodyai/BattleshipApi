@@ -1,0 +1,69 @@
+
+NOTE: Sequences below are provided as examples. Responses should match format and function. 
+As some values are not deterministic, an exact match is not expected.
+
+======================================================================
+
+WHEN I send:
+ Content-Type: application/json
+ POST /start-game
+
+ { "player": "John Doe" }
+
+THEN I should expect:
+ Content-Type: application/json
+ 200 OK
+
+ { "game-id": "52BA9500-5473-429B-9FC8-9438815C195D" }
+
+======================================================================
+
+WHEN I send:
+ Content-Type: application/json
+ POST /play/52BA9500-5473-429B-9FC8-9438815C195D
+
+ { "coordinate": [1, 0] }
+
+THEN I should expect:
+ Content-Type: application/json
+ 200 OK
+
+ { "result": "hit" }
+
+
+======================================================================
+
+WHEN I send:
+ Content-Type: application/json
+ GET /status/52BA9500-5473-429B-9FC8-9438815C195D
+
+THEN I should expect:
+ Content-Type: application/json
+ 200 OK
+
+ { "dimensions": [ 10, 10 ],
+   "status": [
+        "hit", "X", "X", "X", "X", "X", "X", "X", "X", "X",
+        "hit", "X", "X", "X", "X", "X", "X", "X", "X", "X",
+        "hit", "X", "X", "X", "X", "X", "X", "X", "X", "X",
+        "X", "X", "X", "X", "X", "X", "miss", "X", "X", "X",
+        "X", "X", "miss", "X", "X", "X", "X", "X", "X", "X",
+        "X", "X", "X", "X", "X", "X", "X", "X", "X", "X",
+        "X", "X", "X", "X", "X", "X", "X", "X", "X", "X",
+        "X", "X", "X", "X", "X", "X", "miss", "X", "X", "X",
+        "X", "X", "X", "X", "X", "X", "X", "X", "X", "X",
+        "X", "X", "X", "X", "X", "X", "X", "X", "X", "X"
+    ] }
+
+======================================================================
+
+WHEN I send:
+ Content-Type: application/json
+ GET /reset-game/52BA9500-5473-429B-9FC8-9438815C195D
+
+THEN I should expect:
+ Content-Type: application/json
+ 200 OK
+
+ { "status": "success", "message": "Successfully reset game" }
+

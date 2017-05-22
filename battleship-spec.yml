@@ -1,0 +1,173 @@
+swagger: '2.0'
+info:
+  description: Definition of the Battleship web service API.
+  version: 1.0.0
+  title: Battleship
+  termsOfService: 'about:blank'
+  contact:
+    email: nobody@mail.com
+  license:
+    name: MIT 1.0
+    url: 'https://opensource.org/licenses/MIT'
+host: localhost
+basePath: /
+schemes:
+  - http
+paths:
+  /start-game:
+    post:
+      summary: Begin a game.
+      description: ''
+      operationId: startGame
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: body
+          in: body
+          description: Start a new game.
+          required: true
+          schema:
+            $ref: '#/definitions/GameStart'
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions'
+        '405':
+          description: Invalid input
+  '/play/{game_id}':
+    post:
+      summary: Play a turn
+      description: Play a turn in the game.
+      operationId: playTurn
+      produces:
+        - application/json
+      parameters:
+        - name: game_id
+          in: path
+          description: ID of game to play
+          required: true
+          type: string
+        - name: body
+          in: body
+          description: ''
+          required: true
+          schema:
+            $ref: '#/definitions/GamePlay'
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/GamePlayResponse'
+        '404':
+          description: Game ID not found
+  '/status/{game_id}':
+    get:
+      summary: The current status of the game.
+      description: >-
+        Returns a result for each coordinate on the board that is one of: Hit,
+        Miss, or X.
+      operationId: getGameStatus
+      produces:
+        - application/json
+      parameters:
+        - name: game_id
+          in: path
+          description: Game ID to get status for
+          required: true
+          type: string
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            $ref: '#/definitions/GameStatus'
+        '404':
+          description: Game ID not found
+  '/reset-game/{game_id}':
+    delete:
+      summary: Resets the game state maintaining ship layout.
+      description: >-
+        All record of play attempts for this game are forgotten. The ship
+        locations are maintained from game start.
+      operationId: resetGame
+      produces:
+        - application/json
+      parameters:
+        - name: game_id
+          in: path
+          description: ID of game to reset
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Successful operation
+          schema:
+            $ref: '#/definitions/OperationStatus'
+        '404':
+          description: Game ID not found
+          schema:
+            $ref: '#/definitions/OperationStatus'
+        '500':
+          description: Failed
+          schema:
+            $ref: '#/definitions/OperationStatus'
+definitions:
+  OperationStatus:
+    type: object
+    properties:
+      status:
+        description: Result of operation
+        type: string
+        enum:
+          - success
+          - failed
+      message:
+        description: Additional status message.
+        type: string
+  GameStart:
+    type: object
+    properties:
+      player:
+        type: string
+        description: Player name
+  GamePlay:
+    type: object
+    properties:
+      coordinate:
+        $ref: '#/definitions/Coordinate'
+  GamePlayResponse:
+    type: object
+    properties:
+      result:
+        type: string
+        description: Result of move.
+        enum:
+          - hit
+          - miss
+          - win
+  GameStatus:
+    type: object
+    properties:
+      dimensions:
+        type: array
+        items:
+          type: integer
+          format: int32
+      status:
+        type: array
+        items:
+          type: string
+          enum:
+            - hit
+            - miss
+            - X
+  Coordinate:
+    type: array
+    items:
+      type: integer
+      format: int32
+externalDocs:
+  description: Find out more about Swagger
+  url: 'http://swagger.io'
