@@ -11,7 +11,7 @@ import json
 import requests
 
 
-BASE_URL = 'http://localhost:8080'
+BASE_URL = 'http://localhost:8082/battleshipApi'
 
 def get_parser():
     """
@@ -84,14 +84,19 @@ def build_request(build_args):
                              headers={'Content-Type': 'application/json'},
                              data=json.dumps({'coord': [int(x) for x in build_args.coord.split(',')] }))
     elif build_args.status:
+        print('stats...')
         return requests.get(BASE_URL + '/status/{}'.format(build_args.game_id),
                             headers={'Content-Type': 'application/json'},
                             params={})
     elif build_args.start:
+        print 'starting...'
+        print (BASE_URL + '/start-game')
+        print json.dumps({'player': build_args.player})
         return requests.post(BASE_URL + '/start-game',
                              headers={'Content-Type': 'application/json'},
                              data=json.dumps({'player': build_args.player}))
     elif build_args.reset:
+        print('resetting...')
         return requests.delete(BASE_URL + '/reset-game/{}'.format(build_args.game_id))
     return None
 
@@ -112,8 +117,10 @@ def run_main():
 
     request = build_request(args)
 
+    print('This is request ' + str(request))
+
     if request:
-        print "Service returned: ", request.status
+        print "Service returned: ", request
         print request.json()
     else:
         print "Invalid command."
