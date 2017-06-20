@@ -1,22 +1,25 @@
 package org.auclaire.example;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
 import org.json.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-
 @RestController
 @RequestMapping("/")
 public class BattleshipController {
 
+	List<UUID> gameids = new ArrayList<UUID>();
 	boolean carrierSet;
 	boolean battleshipSet;
 	boolean cruiserSet;
@@ -26,8 +29,8 @@ public class BattleshipController {
 	String[][] board;
 	String[][] ships;
 	String startInput;
-	
-	UUID gameid = UUID.randomUUID();
+
+	UUID gameid;
 
 	Random r;
 
@@ -35,61 +38,106 @@ public class BattleshipController {
 	public @ResponseBody ResponseEntity<String> start(@RequestBody String input) {
 		//reinit new game
 		reinit(true);
-		
+		gameid = UUID.randomUUID();
+
 		//server response
 		JSONObject jsonObj = new JSONObject("{\"game-id\":\"" + gameid + "\"}");
-
-		return new ResponseEntity<String>(jsonObj.toString(), HttpStatus.OK);
+		if(gameid.getClass().getName().equals("java.util.UUID")) {
+			return new ResponseEntity<String>(jsonObj.toString(), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<String>("Invalid inoput", HttpStatus.METHOD_NOT_ALLOWED);
+		}
 	}
 
 	@RequestMapping(value = "play/{game-id}", method = RequestMethod.POST, produces = "application/json")
-	public @ResponseBody ResponseEntity<String> move(@RequestBody String input) {
-		
-		String hitMiss = "";
-		int xcoor = 0;
-		int ycoor = 0;
-		
-		//client data
-		JSONObject jsonClient = new JSONObject(input);
-		xcoor = jsonClient.getJSONArray("coord").getInt(0);
-		ycoor = jsonClient.getJSONArray("coord").getInt(1);
-		
-		if(ships[ycoor][xcoor] == "O") {
-			board[ycoor][xcoor] = "hit";
-			hitMiss = "hit";
-		} else {
-			board[ycoor][xcoor] = "miss";
-			hitMiss = "miss";
-		}	
+	public @ResponseBody ResponseEntity<String> move(@PathVariable(value="game-id") String id, @RequestBody String input) {
 
-		//server response
-		JSONObject jsonServer = new JSONObject("{\"result\":\"" + hitMiss + "\"}");
+	    UUID uuid = UUID.fromString(id);
 
-		printBoards();
-		return new ResponseEntity<String>(jsonServer.toString(), HttpStatus.OK);
+	    if(id.equals(uuid.toString())) {
+	    	if(id.equals(gameid.toString())) {
+				String hitMiss = "";
+				int xcoor = 0;
+				int ycoor = 0;
+
+				//client data
+				JSONObject jsonClient = new JSONObject(input);
+				xcoor = jsonClient.getJSONArray("coord").getInt(0);
+				ycoor = jsonClient.getJSONArray("coord").getInt(1);
+
+				if(ships[ycoor][xcoor] == "O") {
+					board[ycoor][xcoor] = "hit";
+					hitMiss = "hit";
+				} else {
+					board[ycoor][xcoor] = "miss";
+					hitMiss = "miss";
+				}
+
+				//server response
+				JSONObject jsonServer = new JSONObject("{\"result\":\"" + hitMiss + "\"}");
+
+				printBoards();
+
+				return new ResponseEntity<String>(jsonServer.toString(), HttpStatus.OK);
+	    	} else {
+	    		System.out.println("game id not found");
+		    	return new ResponseEntity<String>("game id not found", HttpStatus.NOT_FOUND);
+	    	}
+	    } else {
+	    	System.out.println("invalid input");
+			return new ResponseEntity<String>("invalid input", HttpStatus.NOT_FOUND);
+	    }
 	}
-	
+
 	@RequestMapping(value = "status/{game-id}", method = RequestMethod.GET)
-	public @ResponseBody ResponseEntity<String> status() {
+	public @ResponseBody ResponseEntity<String> status(@PathVariable(value="game-id") String id) {
 
-		//server response
-		JSONObject jsonServer = new JSONObject("{\"dimensions\":\"[10,10]\",\"status\":" + jsonBoard(board) + "}");
+	    UUID uuid = UUID.fromString(id);
 
-		jsonBoard(board);
-		
-		return new ResponseEntity<String>(jsonServer.toString(), HttpStatus.OK);
+	    if(id.equals(uuid.toString())) {
+	    	if(id.equals(gameid.toString())) {
+	    		//server response
+	    		JSONObject jsonServer = new JSONObject("{\"dimensions\":\"[10,10]\",\"status\":" + jsonBoard(board) + "}");
+
+	    		jsonBoard(board);
+
+	    		return new ResponseEntity<String>(jsonServer.toString(), HttpStatus.OK);
+	    	} else {
+	    		System.out.println("game id not found");
+		    	return new ResponseEntity<String>("game id not found", HttpStatus.NOT_FOUND);
+	    	}
+	    } else {
+	    	System.out.println("invalid input");
+			return new ResponseEntity<String>("invalid input", HttpStatus.NOT_FOUND);
+	    }
 	}
-	
+
 	@RequestMapping(value = "reset-game/{game-id}", method = RequestMethod.DELETE)
-	public @ResponseBody ResponseEntity<String> reset() {
-		
-		//reinit without newgame
-		reinit(false);
+	public @ResponseBody ResponseEntity<String> reset(@PathVariable(value="game-id") String id) {
 
-		//server response
-		JSONObject jsonServer = new JSONObject("{\"status\":\"success\",\"message\":\"Successfully reset game\"}");
+	    UUID uuid = UUID.fromString(id);
 
-		return new ResponseEntity<String>(jsonServer.toString(), HttpStatus.OK);
+	    if(id.equals(uuid.toString())) {
+	    	if(id.equals(gameid.toString())) {
+	    		//reinit without newgame
+	    		//reinit(false);
+
+	    		if(!reinit(false)) {
+	    			return new ResponseEntity<String>("Error", HttpStatus.INTERNAL_SERVER_ERROR);
+	    		}
+
+	    		//server response
+	    		JSONObject jsonServer = new JSONObject("{\"status\":\"success\",\"message\":\"Successfully reset game\"}");
+
+	    		return new ResponseEntity<String>(jsonServer.toString(), HttpStatus.OK);
+	    	} else {
+	    		System.out.println("game id not found");
+		    	return new ResponseEntity<String>("game id not found", HttpStatus.NOT_FOUND);
+	    	}
+	    } else {
+	    	System.out.println("invalid input");
+			return new ResponseEntity<String>("invalid input", HttpStatus.NOT_FOUND);
+	    }
 	}
 
 	public void placeCarrier(String[][] s) {
@@ -241,7 +289,7 @@ public class BattleshipController {
 		}
 		System.out.println();
 	}
-	
+
 	public static JSONArray jsonBoard(String[][] b) {
 		JSONArray jArr = new JSONArray();
 		for(int i = 0; i < b.length; i++) {
@@ -254,12 +302,12 @@ public class BattleshipController {
 		}
 		return jArr;
 	}
-	
+
 	public void printBoards() {
 		printBoard(board);
 		//printBoard(ships);
 	}
-	
+
 	public boolean isWin(String[][] b) {
 		int counter = 0;
 		for(int i = 0; i < 10; i++) {
@@ -268,7 +316,7 @@ public class BattleshipController {
 					counter++;
 			}
 		}
-		
+
 		if(counter >= 17) {
 			System.out.println("WIN!");
 			return true;
@@ -276,8 +324,8 @@ public class BattleshipController {
 			return false;
 		}
 	}
-	
-	public void reinit(boolean newGame) {
+
+	public boolean reinit(boolean newGame) {
 		//reinitialize the game
 		this.carrierSet = false;
 		this.battleshipSet = false;
@@ -289,7 +337,7 @@ public class BattleshipController {
 		ships = new String[10][10];
 
 		r = new Random();
-		
+
 		if(newGame)
 			gameid = UUID.randomUUID();
 
@@ -306,15 +354,17 @@ public class BattleshipController {
 			placeCruiserSub(ships, true);
 		while(!destroyerSet)
 			placeDestroyer(ships);
-		
+
 		//print the current game state
 		printBoards();
+
+		return true;
 	}
 }
 
 
 /*
-NOTE: Sequences below are provided as examples. Responses should match format and function. 
+NOTE: Sequences below are provided as examples. Responses should match format and function.
 As some values are not deterministic, an exact match is not expected.
 
 ======================================================================
@@ -383,4 +433,3 @@ THEN I should expect:
  { "status": "success", "message": "Successfully reset game" }
 
  */
-
